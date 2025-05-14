@@ -41,9 +41,11 @@ finish the exercise.
 -/
 
 example (a b : ℝ) : (a+b)*(a-b) = a^2 - b^2 := by
-  -- sorry
-  ring
-  -- sorry
+  calc
+    (a+b)*(a-b) = a*(a-b) + b*(a-b)     := by ring
+    _           = a*a - a*b + b*a - b*b := by ring
+    _           = a^2 - b^2             := by ring
+
 
 /-
 Our next tactic is the `congr` tactic (`congr` stands for “congruence”).
@@ -62,10 +64,8 @@ Try it on the next example.
 -/
 
 example (a b : ℝ) (f : ℝ → ℝ) : f ((a+b)^2 - 2*a*b) = f (a^2 + b^2) := by
-  -- sorry
   congr
   ring
-  -- sorry
 
 /-
 When there are several mismatches, `congr` creates several goals.
@@ -132,13 +132,11 @@ This is different from regular selection of text in your editor or browser.
 -/
 
 example (a b c : ℝ) (h : a = -b) (h' : b + c = 0) : b*(a - c) = 0 := by
-  -- sorry
   calc
     b*(a - c) = b*(-b - c) := by congr
     _         = -b*(b + c) := by ring
     _         = -b*0       := by congr
     _         = 0          := by ring
-  -- sorry
 
 /-
 We can also handle inequalities using `gcongr` (which stands for “generalized congruence”)
@@ -151,11 +149,9 @@ example (a b : ℝ) (h : a ≤ 2*b) : a + b ≤ 3*b := by
     _     = 3*b     := by ring
 
 example (a b : ℝ) (h : b ≤ a) : a + b ≤ 2*a := by
-  -- sorry
   calc
-    a + b ≤ a + a := by gcongr
-    _     = 2*a   := by ring
-  -- sorry
+    a + b <= a + a := by gcongr
+    _     =  2*a   := by ring
 
 /-
 The last tactic you will use in computation is the simplifier `simp`. It will
@@ -215,9 +211,7 @@ In the following exercise, you get to choose whether you want help from Lean
 or do all the work.
 -/
 example (f : ℝ → ℝ) (hf : even_fun f) : f (-5) = f 5 := by
-  -- sorry
-  apply hf
-  -- sorry
+  apply hf 5
 
 /-
 This was about using a `∀`. Let us now see how to prove a `∀`.
@@ -309,12 +303,13 @@ need to be the same notation as in the statement.
 -/
 
 example (f g : ℝ → ℝ) (hf : even_fun f) : even_fun (g ∘ f) := by
-  -- sorry
-  intro x
+  intro x₀
   calc
-    (g ∘ f) (-x) = g (f (-x))   := by simp
-    _            = g (f x)      := by congr 1; apply hf
-  -- sorry
+    (g ∘ f) (-x₀) = g (f (-x₀)) := by simp
+    _             = g (f x₀)    := by congr 1; apply hf
+    _             = (g ∘ f) x₀  := by simp
+
+
 
 /-
 Let's now combine the universal quantifier with implication.
@@ -380,10 +375,10 @@ into pieces. You can choose your way in the following variation.
 
 example (f g : ℝ → ℝ) (hf : non_decreasing f) (hg : non_increasing g) :
     non_increasing (g ∘ f) := by
-  -- sorry
-  intro x₁ x₂ hx
-  apply hg (f x₁) (f x₂) (hf x₁ x₂ hx)
-  -- sorry
+  intro x₁ x₂ (h: x₁ <= x₂)
+  apply hg
+  apply hf
+  apply h
 
 /-
 At this stage you should feel that such a proof actually doesn’t require any
@@ -415,10 +410,8 @@ Use `simp` to prove the following. Note that `X : Set ℝ` means that `X` is a
 set containing (only) real numbers. -/
 
 example (x : ℝ) (X Y : Set ℝ) (hx : x ∈ X) : x ∈ (X ∩ Y) ∪ (X \ Y) := by
-  -- sorry
   simp
   apply hx
-  -- sorry
 
 /-
 The `apply?` tactic will find lemmas from the library and tell you their names.
@@ -428,10 +421,7 @@ Use `apply?` to find the lemma that every continuous function with compact suppo
 has a global minimum. -/
 
 example (f : ℝ → ℝ) (hf : Continuous f) (h2f : HasCompactSupport f) : ∃ x, ∀ y, f x ≤ f y := by
-  -- sorry
-  -- use `apply?` to find:
   exact Continuous.exists_forall_le_of_hasCompactSupport hf h2f
-  -- sorry
 
 /- ## Existential quantifiers
 
@@ -470,14 +460,12 @@ example (a b c : ℤ) (h₁ : a ∣ b) (h₂ : b ∣ c) : a ∣ c := by
     _ = a*(k*l) := by ring
 
 example (a b c : ℤ) (h₁ : a ∣ b) (h₂ : a ∣ c) : a ∣ b + c := by
-  -- sorry
   rcases h₁ with ⟨k, hk⟩
   rcases h₂ with ⟨l, hl⟩
-  use k+l
+  use k + l
   calc
-    b + c = a*k + a*l     := by congr
-    _     = a*(k + l)     := by ring
-  -- sorry
+    b + c = (a * k) + (a * l) := by congr
+    _     = a * (k + l)       := by ring
 
 /-
 ## Conjunctions
@@ -526,7 +514,7 @@ example (h : ∀ n, u n = l) : seq_limit u l := by
   intro n hn
   calc |u n - l| = |l - l| := by congr; apply h
     _            = 0       := by simp
-    _            ≤ ε       := by apply?
+    _            ≤ ε       := by exact le_of_lt ε_pos
 
 /- When dealing with absolute values, we'll use the lemma:
 
@@ -545,7 +533,7 @@ below, we use it to prove `ε/2 > 0` from our assumption `ε > 0`.
 -/
 
 -- If `u` tends to `l` and `v` tends `l'` then `u+v` tends to `l+l'`
-example (hu : seq_limit u l) (hv : seq_limit v l') :
+example {u l v l'} (hu : seq_limit u l) (hv : seq_limit v l') :
     seq_limit (u + v) (l + l') := by
   intro ε ε_pos
   rcases hu (ε/2) (by apply?) with ⟨N₁, hN₁⟩
@@ -558,7 +546,7 @@ example (hu : seq_limit u l) (hv : seq_limit v l') :
   calc
     |(u + v) n - (l + l')| = |u n + v n - (l + l')|   := by simp
     _ = |(u n - l) + (v n - l')|                      := by congr; ring
-    _ ≤ |u n - l| + |v n - l'|                        := by apply?
+    _ ≤ |u n - l| + |v n - l'|                        := by exact abs_add_le (u n - l) (v n - l')
     _ ≤ ε/2 + ε/2                                     := by gcongr
     _ = ε                                             := by simp
 
@@ -566,28 +554,25 @@ example (hu : seq_limit u l) (hv : seq_limit v l') :
 /- Let's do something similar: the squeezing theorem using both `ge_max_iff` and `abs_le`.
 You will probably want to rewrite using `abs_le` in several assumptions as well as in the
 goal. You can use `rw [abs_le] at *` for this. -/
-example (hu : seq_limit u l) (hw : seq_limit w l) (h : ∀ n, u n ≤ v n) (h' : ∀ n, v n ≤ w n) :
-    seq_limit v l := by
-  -- sorry
+example (hu : seq_limit u l) (hw : seq_limit w l) (h : ∀ n, u n ≤ v n) (h' : ∀ n, v n ≤ w n) : seq_limit v l := by
   intro ε ε_pos
-  rcases hu ε ε_pos with ⟨N, hN⟩
-  rcases hw ε ε_pos with ⟨N', hN'⟩
-  use max N N'
+  rcases hu ε (by exact ε_pos) with ⟨N₁, hN₁⟩
+  rcases hw ε (by exact ε_pos) with ⟨N₂, hN₂⟩
+  use max N₁ N₂
   intro n hn
   rw [ge_max_iff] at hn
-  specialize hN n hn.1
-  specialize hN' n hn.2
-  specialize h n
-  specialize h' n
-  rw [abs_le] at *
+  specialize hN₁ n hn.1
+  specialize hN₂ n hn.2
+  specialize h   n
+  specialize h'  n
+  rw [abs_le] at hN₁ hN₂ ⊢
   constructor
   calc
-    -ε ≤ u n - l := by apply hN.1
-    _ ≤ v n - l  := by gcongr
+    -ε  <= u n - l := by apply hN₁.1
+    _   <= v n - l := by gcongr
   calc
-    v n - l ≤ w n - l := by gcongr
-          _ ≤ ε := by apply hN'.2
-  -- sorry
+    ε   >= w n - l := by apply hN₂.2
+    _   >= v n - l := by gcongr
 
 
 /- In the next exercise, we'll use
@@ -598,19 +583,16 @@ as the first step.
 -/
 
 -- A sequence admits at most one limit. You will be able to use that lemma in the following
--- exercises.
 lemma uniq_limit (hl : seq_limit u l) (hl' : seq_limit u l') : l = l' := by
   apply eq_of_abs_sub_le_all
-  -- sorry
   intro ε ε_pos
-  rcases hl (ε/2) (by apply?) with ⟨N, hN⟩
-  rcases hl' (ε/2) (by apply?) with ⟨N', hN'⟩
+  rcases hl  (ε/2) (by exact half_pos ε_pos) with ⟨N₁, hN₁⟩
+  rcases hl' (ε/2) (by exact half_pos ε_pos) with ⟨N₂, hN₂⟩
   calc
-    |l - l'| ≤ |l - u (max N N')| + |u (max N N') - l'| := by apply?
-           _ = |u (max N N') - l| + |u (max N N') - l'| := by congr 1; apply?
-           _ ≤ ε/2 + ε/2 := by gcongr; apply hN; apply?; apply hN'; apply?
-           _ = ε := by simp
-  -- sorry
+    |l - l'| <=|l - u (max N₁ N₂)| + |u (max N₁ N₂) - l'| := by exact abs_sub_le l (u (max N₁ N₂)) l'
+    _        = |u (max N₁ N₂) - l| + |u (max N₁ N₂) - l'| := by congr 1; exact abs_sub_comm l (u (max N₁ N₂))
+    _        <=(ε/2) + (ε/2) := by gcongr; apply hN₁; simp; apply hN₂; simp
+    _        = ε             := by ring
 
 /-
 
@@ -636,10 +618,10 @@ at how proofs by induction look like (but we won’t need any other one here).
 lemma id_le_extraction' : extraction φ → ∀ n, n ≤ φ n := by
   intro hyp n
   induction n with
-  | zero =>  apply?
+  | zero =>  exact Nat.zero_le (φ 0)
   | succ n ih => exact Nat.succ_le_of_lt (by
       calc n ≤ φ n := ih
-        _    < φ (n + 1) := by apply hyp; apply?)
+        _    < φ (n + 1) := by apply hyp; exact lt_add_one n)
 
 /-
 In the exercise, we use `∃ n ≥ N, ...` which is the abbreviation of
@@ -651,15 +633,13 @@ Don’t forget to move the cursor around to see what each `apply?` is proving.
 /-- Extractions take arbitrarily large values for arbitrarily large
 inputs. -/
 lemma extraction_ge : extraction φ → ∀ N N', ∃ n ≥ N', φ n ≥ N := by
-  -- sorry
   intro h N N'
   use max N N'
   constructor
-  apply?
+  exact Nat.le_max_right N N'
   calc
-    N ≤ max N N' := by apply?
-    _ ≤ φ (max N N') := by apply?
-  -- sorry
+    φ (max N N') >= max N N' := by exact id_le_extraction' h (max N N')
+    _            >= N        := by exact Nat.le_max_left N N'
 
 /-- A real number `a` is a cluster point of a sequence `u`
 if `u` has a subsequence converging to `a`. -/
@@ -669,40 +649,17 @@ def cluster_point (u : ℕ → ℝ) (a : ℝ) := ∃ φ, extraction φ ∧ seq_l
 `u` arbitrarily close to `a` for arbitrarily large input. -/
 lemma near_cluster :
   cluster_point u a → ∀ ε > 0, ∀ N, ∃ n ≥ N, |u n - a| ≤ ε := by
-  -- sorry
-  intro hyp ε ε_pos N
-  rcases hyp with ⟨φ, φ_extr, hφ⟩
-  rcases hφ ε ε_pos with ⟨N', hN'⟩
-  rcases extraction_ge φ_extr N N' with ⟨q, hq, hq'⟩
-  use φ q
-  constructor
-  apply hq'
-  apply hN' _ hq
-  -- sorry
+  sorry
 
 
 /-- If `u` tends to `l` then its subsequences tend to `l`. -/
 lemma subseq_tendsto_of_tendsto' (h : seq_limit u l) (hφ : extraction φ) :
   seq_limit (u ∘ φ) l := by
-  -- sorry
-  intro ε ε_pos
-  rcases h ε ε_pos with ⟨N, hN⟩
-  use N
-  intro n hn
-  apply hN
-  calc
-    N ≤ n := by apply?
-    _ ≤ φ n := id_le_extraction' hφ n
-  -- sorry
+ sorry
 
 /-- If `u` tends to `l` all its cluster points are equal to `l`. -/
 lemma cluster_limit (hl : seq_limit u l) (ha : cluster_point u a) : a = l := by
-  -- sorry
-  rcases ha with ⟨φ, φ_extr, lim_u_φ⟩
-  apply uniq_limit
-  apply lim_u_φ
-  apply?
-  -- sorry
+  sorry
 
 /-- `u` is a Cauchy sequence if its values get arbitrarily close for large
 enough inputs. -/
@@ -710,18 +667,4 @@ def CauchySequence (u : ℕ → ℝ) :=
   ∀ ε > 0, ∃ N, ∀ p q, p ≥ N → q ≥ N → |u p - u q| ≤ ε
 
 example : (∃ l, seq_limit u l) → CauchySequence u := by
-  -- sorry
-  intro hyp
-  rcases hyp with ⟨l, hl⟩
-  intro ε ε_pos
-  rcases hl (ε / 2) (by apply?) with ⟨N, hN⟩
-  use N
-  intro p q hp hq
-  calc
-    |u p - u q| = |u p - l + (l - u q)| := by congr; ring
-    _ ≤ |u p - l| + |l - u q| := by apply?
-    _ = |u p - l| + |u q - l| := by congr 1; apply?
-    _ ≤ ε/2 + ε/2 := by gcongr; apply?; apply?
-    _ = ε := by simp
-  -- sorry
-
+  sorry
