@@ -649,17 +649,35 @@ def cluster_point (u : ℕ → ℝ) (a : ℝ) := ∃ φ, extraction φ ∧ seq_l
 `u` arbitrarily close to `a` for arbitrarily large input. -/
 lemma near_cluster :
   cluster_point u a → ∀ ε > 0, ∀ N, ∃ n ≥ N, |u n - a| ≤ ε := by
-  sorry
-
+  intro h
+  intro ε ε_pos N
+  rcases h with ⟨φ, φ_extr, hφ⟩
+  rcases hφ ε ε_pos with ⟨N', hN'⟩
+  rcases extraction_ge φ_extr N N' with ⟨Nₙ, hNₙ₁, hNₙ₂⟩
+  use φ Nₙ
+  constructor
+  apply hNₙ₂
+  apply hN'
+  apply hNₙ₁
 
 /-- If `u` tends to `l` then its subsequences tend to `l`. -/
 lemma subseq_tendsto_of_tendsto' (h : seq_limit u l) (hφ : extraction φ) :
   seq_limit (u ∘ φ) l := by
- sorry
+  intro ε ε_pos
+  rcases h ε ε_pos with ⟨N, hN⟩
+  use N
+  intro n hn
+  apply hN
+  calc
+    φ n   >=  n    := by apply id_le_extraction' hφ n
+    _     >=  N    := by apply hn
 
 /-- If `u` tends to `l` all its cluster points are equal to `l`. -/
 lemma cluster_limit (hl : seq_limit u l) (ha : cluster_point u a) : a = l := by
-  sorry
+  rcases ha with ⟨φ, φ_extr, hφ⟩
+  apply uniq_limit
+  apply hφ
+  apply subseq_tendsto_of_tendsto' hl φ_extr
 
 /-- `u` is a Cauchy sequence if its values get arbitrarily close for large
 enough inputs. -/
@@ -667,4 +685,14 @@ def CauchySequence (u : ℕ → ℝ) :=
   ∀ ε > 0, ∃ N, ∀ p q, p ≥ N → q ≥ N → |u p - u q| ≤ ε
 
 example : (∃ l, seq_limit u l) → CauchySequence u := by
-  sorry
+  intro h
+  rcases h with ⟨l, hl⟩
+  intro ε ε_pos
+  rcases hl (ε / 2) (by exact half_pos ε_pos) with ⟨N, hN⟩
+  use N
+  intro p q hp hq
+  calc
+    |u p - u q| <= |u p - l| + |l - u q| := by exact abs_sub_le (u p) l (u q)
+    _           =  |u p - l| + |u q - l| := by congr 1; apply abs_sub_comm l (u q)
+    _           <= (ε / 2) + (ε / 2)     := by gcongr; apply hN; apply hp; apply hN; apply hq;
+    _           <= ε                     := by simp
