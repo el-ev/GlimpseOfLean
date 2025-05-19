@@ -90,7 +90,8 @@ example (a : ℝ) : a > 0 → b > 0 → a + b > 0 := by
 /- Now prove the following simple statement in propositional logic.
 Note that `p → q → r` means `p → (q → r)`. -/
 example (p q r : Prop) : (p → q) → (p → q → r) → p → r := by
-  sorry
+  intro h1 h2
+  apply fun a ↦ h2 a (h1 a)
 
 /-
 Note that, when using `intro`, you need to give a name to the assumption.
