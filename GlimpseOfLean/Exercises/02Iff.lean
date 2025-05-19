@@ -38,7 +38,11 @@ prove one-by-one.
 -/
 
 example (a b : ℝ) (ha : 0 < a) (hb : 0 < b) : 0 < a^2 + b^2 := by
-  sorry
+  apply add_pos
+  apply sq_pos_of_pos
+  exact ha
+  apply sq_pos_of_pos
+  exact hb
 
 /-
 You can also give a proof with forward reasoning, using the `have` tactic.
@@ -61,7 +65,15 @@ example (a : ℝ) (ha : 0 < a) : 0 < (a^2)^2 := by
 /- Now prove the same lemma as before using forwards reasoning. -/
 
 example (a b : ℝ) (ha : 0 < a) (hb : 0 < b) : 0 < a^2 + b^2 := by
-  sorry
+  have haa: 0 < a^2  := by
+    apply sq_pos_of_pos
+    exact ha
+  have hbb: 0 < b^2  := by
+    apply sq_pos_of_pos
+    exact hb
+  apply add_pos
+  exact haa
+  exact hbb
 
 
 /- ## Proving implications
@@ -114,7 +126,9 @@ Let's prove a variation
 -/
 
 example {a b : ℝ} (c : ℝ) : a + c ≤ b + c ↔ a ≤ b := by
-  sorry
+  rw [← sub_nonneg]
+  ring
+  exact sub_nonneg
 
 /-
 The above lemma is already in the mathematical library, under the name `add_le_add_iff_right`:
@@ -149,7 +163,9 @@ example {a b : ℝ}  (ha : 0 ≤ a) : b ≤ a + b := by
 /- Let's do a variant using `add_le_add_iff_left a : a + b ≤ a + c ↔ b ≤ c` instead. -/
 
 example (a b : ℝ) (hb : 0 ≤ b) : a ≤ a + b := by
-  sorry
+  calc
+    a = a + 0   := by ring
+    _ <=a + b   := by exact (add_le_add_iff_left a).2 hb
 
 /-
 ## Proving equivalences
@@ -181,7 +197,16 @@ example (a b : ℝ) : (a-b)*(a+b) = 0 ↔ a^2 = b^2 := by
 /- You can try it yourself in this exercise. -/
 
 example (a b : ℝ) : a = b ↔ b - a = 0 := by
-  sorry
+  constructor
+  · intro h
+    exact sub_eq_zero_of_eq (id (Eq.symm h))
+  · intro h
+    calc
+      a = 0 + a := by ring
+      _ = b - a + a := by rw [h]
+      _ = b     := by ring
+
+
 
 /-
 This is the end of this file where you learned how to handle implications and
@@ -191,4 +216,3 @@ equivalences. You learned about tactics:
 * `have`
 * `constructor`
 -/
-
