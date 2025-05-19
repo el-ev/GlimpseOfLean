@@ -58,16 +58,25 @@ variable {φ : Variable → Prop} {A B : Formula}
 @[simp] lemma isTrue_neg : IsTrue φ ~A ↔ ¬ IsTrue φ A := by simp [neg]
 
 @[simp] lemma isTrue_top : IsTrue φ ⊤ := by
-  sorry
+  exact fun a => a
 
 @[simp] lemma isTrue_equiv : IsTrue φ (A ⇔ B) ↔ (IsTrue φ A ↔ IsTrue φ B) := by
-  sorry
+  constructor
+  · exact fun a ↦ (fun {a b} ↦ iff_iff_implies_and_implies.mpr) a
+  · intro h
+    constructor
+    · apply h.1
+    · apply h.2
 
 /- As an exercise, let's prove (using classical logic) the double negation elimination principle.
   `by_contra h` might be useful to prove something by contradiction. -/
 
 example : Valid (~~A ⇔ A) := by
-  sorry
+  unfold Valid
+  intro empty preq
+  apply isTrue_equiv.2
+  simp [isTrue_neg]
+
 
 /- We will frequently need to add an element to a set. This is done using
 the `insert` function: `insert A Γ` means `Γ ∪ {A}`. -/
@@ -137,11 +146,24 @@ example : {A, B} ⊢ A && B := by
 
 
 example : Provable (~~A ⇔ A) := by
-  sorry
+  apply andI
+  · apply impI
+    apply botC
+    apply impE _ (by apply_ax)
+    apply_ax
+  · apply impI
+    apply impI
+    apply impE (by apply_ax)
+    apply_ax
 
 /- Optional exercise: prove the law of excluded middle. -/
 example : Provable (A || ~A) := by
-  sorry
+  apply botC
+  apply impE (by apply_ax)
+  apply orI2
+  apply impI
+  apply impE (by apply_ax)
+  apply orI1 (by apply_ax)
 
 /- Optional exercise: prove one of the de-Morgan laws.
   If you want to say that the argument called `A` of the axiom `impE` should be `X && Y`,
